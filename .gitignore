@@ -1,0 +1,35 @@
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+htmlcov/
+.coverage
+
+# Flutter and Dart
+.dart_tool/
+.packages
+build/
+coverage/
+
+# Android/iOS generated local state
+local.properties
+GeneratedPluginRegistrant.*
+Flutter/ephemeral/
+Pods/
+
+# Docker/PostgreSQL
+postgres-data/

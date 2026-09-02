@@ -1,0 +1,194 @@
+openapi: 3.1.0
+info:
+  title: Inline Hockey Coach API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: {type: string, const: ok}
+  /api/v1/sync:
+    post:
+      operationId: syncEvents
+      summary: Synchronize one offline batch idempotently
+      parameters:
+        - in: header
+          name: X-Request-ID
+          required: false
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SyncRequest'}
+      responses:
+        '200':
+          description: Batch processed, possibly with partial failures
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SyncResponse'}
+        '413': {description: Payload exceeds 1 MB}
+        '422': {description: Invalid request}
+components:
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+    Coach:
+      type: object
+      required: [id, display_name, created_at, updated_at, version]
+      properties:
+        id: {$ref: '#/components/schemas/UUID'}
+        display_name: {type: string, minLength: 1, maxLength: 120}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        version: {type: integer, minimum: 1}
+    Team:
+      type: object
+      required: [id, name, created_at, updated_at, version]
+      properties:
+        id: {$ref: '#/components/schemas/UUID'}
+        name: {type: string, minLength: 1, maxLength: 120}
+        category: {type: [string, 'null'], maxLength: 80}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        version: {type: integer, minimum: 1}
+    Player:
+      type: object
+      required: [id, team_id, display_name, jersey_number, default_role, active, version]
+      properties:
+        id: {$ref: '#/components/schemas/UUID'}
+        team_id: {$ref: '#/components/schemas/UUID'}
+        display_name: {type: string, minLength: 1, maxLength: 120}
+        jersey_number: {type: integer, minimum: 0, maximum: 99}
+        default_role: {type: string, enum: [SKATER, GOALKEEPER]}
+        active: {type: boolean}
+        version: {type: integer, minimum: 1}
+    SessionPlayer:
+      type: object
+      required: [session_id, player_id, role, version]
+      properties:
+        session_id: {$ref: '#/components/schemas/UUID'}
+        player_id: {$ref: '#/components/schemas/UUID'}
+        role: {type: string, enum: [SKATER, GOALKEEPER]}
+        version: {type: integer, minimum: 1}
+    TournamentSession:
+      type: object
+      required: [id, tournament_name, scheduled_date, team_id, coach_id, active_goalkeeper_id, status, elapsed_ms, device_id, created_at, updated_at]
+      properties:
+        id: {$ref: '#/components/schemas/UUID'}
+        tournament_name: {type: string, minLength: 1, maxLength: 160}
+        scheduled_date: {type: string, format: date}
+        start_time: {type: [string, 'null'], format: time}
+        team_id: {$ref: '#/components/schemas/UUID'}
+        coach_id: {$ref: '#/components/schemas/UUID'}
+        active_goalkeeper_id: {$ref: '#/components/schemas/UUID'}
+        status: {type: string, enum: [DRAFT, IN_PROGRESS, PAUSED, FINISHED]}
+        elapsed_ms: {type: integer, minimum: 0}
+        device_id: {$ref: '#/components/schemas/UUID'}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        version: {type: integer, minimum: 1, default: 1}
+    MatchAction:
+      type: object
+      required: [id, session_id, player_id, action_type, chronometer_ms, device_id, client_event_id, created_at, version]
+      properties:
+        id: {$ref: '#/components/schemas/UUID'}
+        session_id: {$ref: '#/components/schemas/UUID'}
+        player_id: {$ref: '#/components/schemas/UUID'}
+        action_type: {type: string, enum: [PASS, FAIL_PASS, ASSIST, SHOOT]}
+        chronometer_ms: {type: integer, minimum: 0}
+        device_id: {$ref: '#/components/schemas/UUID'}
+        client_event_id: {$ref: '#/components/schemas/UUID'}
+        created_at: {type: string, format: date-time}
+        voided_at: {type: [string, 'null'], format: date-time}
+        void_reason: {type: [string, 'null'], maxLength: 160}
+        version: {type: integer, minimum: 1}
+        shoot_details:
+          anyOf:
+            - {$ref: '#/components/schemas/ShootDetails'}
+            - {type: 'null'}
+    ShootDetails:
+      type: object
+      required: [result, target_zone]
+      properties:
+        result: {type: string, enum: [GOAL, MISSED, HIT_KEEPER, BLOCKED]}
+        target_zone: {type: string, enum: [TOP_LEFT, TOP_MIDDLE, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_MIDDLE, BOTTOM_RIGHT]}
+        keeper_side: {type: string, enum: [GLOVE, PAD, UNKNOWN], default: UNKNOWN}
+    GoalkeeperAction:
+      type: object
+      required: [id, session_id, goalkeeper_id, shot_origin_zone, result, chronometer_ms, device_id, client_event_id, created_at, version]
+      properties:
+        id: {$ref: '#/components/schemas/UUID'}
+        session_id: {$ref: '#/components/schemas/UUID'}
+        goalkeeper_id: {$ref: '#/components/schemas/UUID'}
+        shot_origin_zone: {type: string, enum: [ZONE_1, ZONE_2, ZONE_3, ZONE_4]}
+        result: {type: string, enum: [SAVE, GOAL_ALLOWED]}
+        chronometer_ms: {type: integer, minimum: 0}
+        device_id: {$ref: '#/components/schemas/UUID'}
+        client_event_id: {$ref: '#/components/schemas/UUID'}
+        created_at: {type: string, format: date-time}
+        voided_at: {type: [string, 'null'], format: date-time}
+        void_reason: {type: [string, 'null'], maxLength: 160}
+        version: {type: integer, minimum: 1}
+    SyncRequest:
+      type: object
+      required: [device_id, batch_id, coaches, teams, players, sessions, session_players, player_actions, goalkeeper_actions]
+      properties:
+        device_id: {$ref: '#/components/schemas/UUID'}
+        batch_id: {$ref: '#/components/schemas/UUID'}
+        coaches:
+          type: array
+          items: {$ref: '#/components/schemas/Coach'}
+        teams:
+          type: array
+          items: {$ref: '#/components/schemas/Team'}
+        players:
+          type: array
+          items: {$ref: '#/components/schemas/Player'}
+        sessions:
+          type: array
+          items: {$ref: '#/components/schemas/TournamentSession'}
+        session_players:
+          type: array
+          items: {$ref: '#/components/schemas/SessionPlayer'}
+        player_actions:
+          type: array
+          items: {$ref: '#/components/schemas/MatchAction'}
+        goalkeeper_actions:
+          type: array
+          items: {$ref: '#/components/schemas/GoalkeeperAction'}
+      allOf:
+        - description: Combined event count must be at most 200.
+    SyncItemResult:
+      type: object
+      required: [entity_type, entity_id, status, server_version]
+      properties:
+        entity_type: {type: string, enum: [COACH, TEAM, PLAYER, SESSION, SESSION_PLAYER, MATCH_ACTION, GOALKEEPER_ACTION]}
+        entity_id:
+          type: string
+          description: UUID for ordinary entities; session_id:player_id for SESSION_PLAYER.
+        status: {type: string, enum: [ACCEPTED, DUPLICATE, CONFLICT, REJECTED]}
+        server_version: {type: integer, minimum: 1}
+        error_code: {type: [string, 'null']}
+        message: {type: [string, 'null']}
+    SyncResponse:
+      type: object
+      required: [batch_id, processed_at, results]
+      properties:
+        batch_id: {$ref: '#/components/schemas/UUID'}
+        processed_at: {type: string, format: date-time}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/SyncItemResult'}
