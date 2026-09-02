@@ -21,13 +21,22 @@ Permitir que un entrenador configure un partido, registre acciones de jugadores 
    ```
    La API estará disponible en `http://localhost:8000`. Puedes ver la documentación en `http://localhost:8000/docs`.
 
-3. **Arrancar la App Móvil:**
+3. **Arrancar la App Móvil (o Web):**
    Asegúrate de tener Flutter instalado y configurado.
+   
+   *Para ejecutar en simulador o dispositivo móvil:*
    ```bash
    cd apps/mobile
    flutter pub get
    flutter run
    ```
+
+   *Para ejecutar la versión Web localmente (Chrome):*
+   ```bash
+   cd apps/mobile
+   flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
+   ```
+   > **Nota sobre la Web:** La versión web soporta funcionamiento "offline-first". La base de datos SQLite se ejecuta directamente en el navegador utilizando WebAssembly (`sql-wasm.wasm`).
 
 4. **Compilar para Producción:**
    Para Android (Genera un APK en `build/app/outputs/flutter-apk/app-release.apk`):
@@ -39,6 +48,11 @@ Permitir que un entrenador configure un partido, registre acciones de jugadores 
    ```bash
    cd apps/mobile
    flutter build ios --no-codesign
+   ```
+   Para Web (Genera archivos estáticos en `build/web/` listos para desplegar):
+   ```bash
+   cd apps/mobile
+   flutter build web --dart-define=API_BASE_URL=https://tu-api.com
    ```
 
 ## Estructura
