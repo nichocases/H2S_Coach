@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -9,26 +11,27 @@ final adminUsersProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>
   return List<Map<String, dynamic>>.from(response);
 });
 
-class AdminController extends StateNotifier<AsyncValue<void>> {
-  AdminController(this.ref) : super(const AsyncData(null));
+class AdminController extends StateNotifier<bool> {
+  AdminController(this.ref) : super(false);
   
   final Ref ref;
 
   Future<void> updateUserRole(String userId, String newRole) async {
-    state = const AsyncLoading();
+    state = true;
     try {
       await Supabase.instance.client
-          .from('profiles')
+          .from('admin_user_profiles')
           .update({'role': newRole})
           .eq('id', userId);
       ref.invalidate(adminUsersProvider);
-      state = const AsyncData(null);
-    } catch (e, st) {
-      state = AsyncError(e, st);
+    } catch (e) {
+      print('Error updating role: $e');
+    } finally {
+      state = false;
     }
   }
 }
 
-final adminControllerProvider = StateNotifierProvider<AdminController, AsyncValue<void>>((ref) {
+final adminControllerProvider = StateNotifierProvider.autoDispose<AdminController, bool>((ref) {
   return AdminController(ref);
 });

@@ -50,7 +50,7 @@ class AdminUsersScreen extends ConsumerWidget {
                   );
                 },
               ),
-              if (controllerState.isLoading)
+              if (controllerState)
                 const ColoredBox(
                   color: Colors.black54,
                   child: Center(child: CircularProgressIndicator()),
