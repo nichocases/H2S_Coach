@@ -30,7 +30,8 @@ class DashboardRepository {
       FROM match_actions m
       JOIN tournament_sessions s ON s.id = m.session_id
       JOIN teams t ON t.id = s.team_id
-      WHERE m.action_type = 'SHOOT' AND m.outcome = 'GOAL' AND m.voided_at IS NULL 
+      JOIN shoot_details sd ON sd.action_id = m.id
+      WHERE m.action_type = 'SHOOT' AND sd.result = 'GOAL' AND m.voided_at IS NULL 
         $categoryFilter $teamFilter $tournamentFilter $dateFilter
       ''',
       variables: vars,
@@ -43,7 +44,7 @@ class DashboardRepository {
       FROM goalkeeper_actions g
       JOIN tournament_sessions s ON s.id = g.session_id
       JOIN teams t ON t.id = s.team_id
-      WHERE g.action_type = 'GOAL_ALLOWED' AND g.voided_at IS NULL 
+      WHERE g.result = 'GOAL_ALLOWED' AND g.voided_at IS NULL 
         $categoryFilter $teamFilter $tournamentFilter $dateFilter
       ''',
       variables: vars,
@@ -92,14 +93,16 @@ class DashboardRepository {
         p.id AS player_id,
         p.display_name AS player_name,
         p.jersey_number AS jersey,
-        SUM(CASE WHEN m.action_type = 'SHOOT' AND m.outcome = 'GOAL' THEN 1 ELSE 0 END) AS goals,
+        SUM(CASE WHEN m.action_type = 'SHOOT' AND m.shoot_result = 'GOAL' THEN 1 ELSE 0 END) AS goals,
         SUM(CASE WHEN m.action_type = 'ASSIST' THEN 1 ELSE 0 END) AS assists,
         SUM(CASE WHEN m.action_type = 'SHOOT' THEN 1 ELSE 0 END) AS shots
       FROM players p
       LEFT JOIN (
-        SELECT ma.* FROM match_actions ma 
+        SELECT ma.player_id, ma.action_type, sd.result AS shoot_result 
+        FROM match_actions ma 
         JOIN tournament_sessions s ON s.id = ma.session_id
         JOIN teams t ON t.id = s.team_id
+        LEFT JOIN shoot_details sd ON sd.action_id = ma.id
         WHERE ma.voided_at IS NULL $categoryFilter $tournamentFilter $dateFilter
       ) m ON m.player_id = p.id
       WHERE p.default_role = 'SKATER' $teamFilter
@@ -144,11 +147,11 @@ class DashboardRepository {
         p.id AS player_id,
         p.display_name AS player_name,
         p.jersey_number AS jersey,
-        SUM(CASE WHEN g.action_type = 'GOAL_ALLOWED' THEN 1 ELSE 0 END) AS goals_allowed,
-        COUNT(g.id) AS shots_faced
+        SUM(CASE WHEN g.result = 'GOAL_ALLOWED' THEN 1 ELSE 0 END) AS goals_allowed,
+        COUNT(g.result) AS shots_faced
       FROM players p
       LEFT JOIN (
-        SELECT ga.* FROM goalkeeper_actions ga 
+        SELECT ga.goalkeeper_id, ga.result FROM goalkeeper_actions ga 
         JOIN tournament_sessions s ON s.id = ga.session_id
         JOIN teams t ON t.id = s.team_id
         WHERE ga.voided_at IS NULL $categoryFilter $tournamentFilter $dateFilter
@@ -166,7 +169,7 @@ class DashboardRepository {
         playerName: row.read<String>('player_name'),
         jerseyNumber: row.read<int>('jersey'),
         goalsAllowed: row.read<int>('goals_allowed') ?? 0,
-        shotsFaced: row.read<int>('shots_faced'),
+        shotsFaced: row.read<int>('shots_faced') ?? 0,
       );
     }).toList();
   }
