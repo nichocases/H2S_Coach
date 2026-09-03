@@ -111,7 +111,7 @@ class _LiveMatchScreenState extends ConsumerState<LiveMatchScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go('/teams'),
         ),
         title: const Text('Partido en vivo'),
       ),

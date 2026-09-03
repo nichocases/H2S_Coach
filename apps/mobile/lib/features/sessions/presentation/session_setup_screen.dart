@@ -122,7 +122,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go('/teams'),
         ),
         title: const Text('Configuración del partido'),
       ),

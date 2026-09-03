@@ -32,7 +32,7 @@ class MatchSummaryScreen extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Sesión finalizada')),
             );
-            context.go('/');
+            context.go('/teams');
           }
         },
         label: const Text('Finalizar Partido'),

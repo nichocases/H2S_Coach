@@ -94,7 +94,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
           content: Text('${team.name} quedó listo con ${coach.displayName}.'),
         ),
       );
-      context.go('/');
+      context.go('/teams');
     } on Exception catch (error, stackTrace) {
       print('=== ERROR SAVING TEAM ===');
       print(error);
@@ -115,7 +115,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go('/teams'),
         ),
         title: const Text('Nuevo equipo'),
       ),
