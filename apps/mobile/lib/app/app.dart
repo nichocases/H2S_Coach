@@ -1,41 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inline_hockey_coach/app/router.dart';
 import 'package:inline_hockey_coach/app/theme.dart';
 import 'package:inline_hockey_coach/features/sync/application/sync_bootstrap.dart';
 
-class InlineHockeyCoachApp extends StatefulWidget {
+class InlineHockeyCoachApp extends ConsumerWidget {
   const InlineHockeyCoachApp({this.enableSyncBootstrap = true, super.key});
 
   final bool enableSyncBootstrap;
 
   @override
-  State<InlineHockeyCoachApp> createState() => _InlineHockeyCoachAppState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
 
-class _InlineHockeyCoachAppState extends State<InlineHockeyCoachApp> {
-  late final GoRouter _router;
-
-  @override
-  void initState() {
-    super.initState();
-    _router = createRouter();
-  }
-
-  @override
-  void dispose() {
-    _router.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Inline Hockey Coach',
-      routerConfig: _router,
+      routerConfig: router,
       builder: (context, child) {
         final routedChild = child ?? const SizedBox.shrink();
-        if (!widget.enableSyncBootstrap) {
+        if (!enableSyncBootstrap) {
           return routedChild;
         }
         return SyncBootstrap(child: routedChild);
