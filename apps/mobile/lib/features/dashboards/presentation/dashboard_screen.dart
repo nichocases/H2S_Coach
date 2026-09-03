@@ -16,6 +16,8 @@ class DashboardScreen extends ConsumerWidget {
     final teamsAsync = ref.watch(teamListProvider);
     final categoriesAsync = ref.watch(uniqueCategoriesProvider);
     final tournamentsAsync = ref.watch(uniqueTournamentsProvider);
+    final user = ref.watch(currentUserProvider);
+    final roleAsync = ref.watch(userRoleProvider);
 
     return DefaultTabController(
       length: 3,
@@ -32,6 +34,16 @@ class DashboardScreen extends ConsumerWidget {
         ),
         body: Column(
           children: [
+            Container(
+              padding: const EdgeInsets.all(8.0),
+              color: Colors.black87,
+              width: double.infinity,
+              child: Text(
+                'DEBUG -> Usuario: ${user?.email ?? 'Ninguno'} | Rol: ${roleAsync.hasError ? 'ERROR: ${roleAsync.error}' : (roleAsync.value ?? 'Cargando...')}',
+                style: const TextStyle(color: Colors.greenAccent, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
