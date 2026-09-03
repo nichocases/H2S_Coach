@@ -21,7 +21,9 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // Supabase's authStateChange will automatically redirect via router
+      if (mounted) {
+        context.go('/dashboards');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
