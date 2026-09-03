@@ -1,14 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inline_hockey_coach/features/auth/application/admin_providers.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AdminUsersScreen extends ConsumerWidget {
+class AdminUsersScreen extends ConsumerStatefulWidget {
   const AdminUsersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminUsersScreen> createState() => _AdminUsersScreenState();
+}
+
+class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
+  bool _isLoading = false;
+
+  Future<void> _updateUserRole(String userId, String newRole) async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client
+          .from('admin_user_profiles')
+          .update({'role': newRole})
+          .eq('id', userId);
+      ref.invalidate(adminUsersProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final usersAsync = ref.watch(adminUsersProvider);
-    final controllerState = ref.watch(adminControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -43,14 +71,14 @@ class AdminUsersScreen extends ConsumerWidget {
                       ],
                       onChanged: (newRole) {
                         if (newRole != null && newRole != currentRole) {
-                          ref.read(adminControllerProvider.notifier).updateUserRole(userId, newRole);
+                          _updateUserRole(userId, newRole);
                         }
                       },
                     ),
                   );
                 },
               ),
-              if (controllerState)
+              if (_isLoading)
                 const ColoredBox(
                   color: Colors.black54,
                   child: Center(child: CircularProgressIndicator()),
