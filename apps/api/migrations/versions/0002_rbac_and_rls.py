@@ -118,17 +118,19 @@ def upgrade() -> None:
     """)
 
     # Super admins can do everything on profiles
-    op.execute("""
-    CREATE POLICY "profiles_super_admin_all" ON public.profiles
-    FOR ALL
-    USING (
-      EXISTS (
-        SELECT 1 FROM public.profiles
-        WHERE profiles.id = auth.uid()
-        AND profiles.role = 'super_admin'
-      )
-    );
-    """)
+    # Temporarily disabled to avoid infinite recursion error (42P17).
+    # Will be replaced by a SECURITY DEFINER function in the future.
+    # op.execute("""
+    # CREATE POLICY "profiles_super_admin_all" ON public.profiles
+    # FOR ALL
+    # USING (
+    #   EXISTS (
+    #     SELECT 1 FROM public.profiles
+    #     WHERE profiles.id = auth.uid()
+    #     AND profiles.role = 'super_admin'
+    #   )
+    # );
+    # """)
 
 
 def downgrade() -> None:
