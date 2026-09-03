@@ -4,6 +4,8 @@ import 'package:inline_hockey_coach/app/app_shell.dart';
 import 'package:inline_hockey_coach/core/providers/auth_provider.dart';
 import 'package:inline_hockey_coach/features/auth/presentation/login_screen.dart';
 import 'package:inline_hockey_coach/features/auth/presentation/register_screen.dart';
+import 'package:inline_hockey_coach/features/auth/presentation/admin_users_screen.dart';
+
 import 'package:inline_hockey_coach/features/dashboards/presentation/dashboard_screen.dart';
 import 'package:inline_hockey_coach/features/sessions/presentation/live_match_screen.dart';
 import 'package:inline_hockey_coach/features/sessions/presentation/session_setup_screen.dart';
@@ -109,6 +111,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             sessionId: state.pathParameters['sessionId']!,
           );
         },
+      ),
+      GoRoute(
+        path: '/admin/users',
+        name: 'admin-users',
+        parentNavigatorKey: _rootNavigatorKey,
+        redirect: (context, state) {
+          // If not super_admin, don't let them in
+          final roleAsync = ref.read(userRoleProvider);
+          if (roleAsync.value != 'super_admin') return '/dashboards';
+          return null;
+        },
+        builder: (context, state) => const AdminUsersScreen(),
       ),
     ],
   );

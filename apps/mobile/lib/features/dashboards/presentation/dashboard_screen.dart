@@ -1,3 +1,5 @@
+import 'package:go_router/go_router.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inline_hockey_coach/domain/entities/dashboard_models.dart';
@@ -25,6 +27,14 @@ class DashboardScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Estadísticas'),
+          actions: [
+            if (roleAsync.value == 'super_admin')
+              IconButton(
+                icon: const Icon(Icons.manage_accounts),
+                tooltip: 'Administrar Usuarios',
+                onPressed: () => context.push('/admin/users'),
+              ),
+          ],
           bottom: const TabBar(
             tabs: [
               Tab(text: 'General'),
