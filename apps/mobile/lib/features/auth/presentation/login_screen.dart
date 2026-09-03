@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Text('¿No tienes cuenta? Regístrate'),
               ),
               TextButton(
-                onPressed: () => context.go('/'),
+                onPressed: () => context.go('/dashboards'),
                 child: const Text('Continuar como invitado (Fachada Pública)'),
               ),
             ],

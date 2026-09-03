@@ -21,8 +21,10 @@ final userRoleProvider = FutureProvider<String>((ref) async {
         .select('role')
         .eq('id', user.id)
         .single();
+    print('User role fetched: ${response['role']}');
     return response['role'] as String;
   } catch (e) {
+    print('Error fetching user role: $e');
     return 'parent'; // default fallback
   }
 });
