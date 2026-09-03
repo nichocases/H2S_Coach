@@ -6,6 +6,7 @@ import 'package:inline_hockey_coach/features/teams/application/team_overview_pro
 import 'package:inline_hockey_coach/features/dashboards/presentation/widgets/goalkeeper_metrics_view.dart';
 import 'package:inline_hockey_coach/features/dashboards/presentation/widgets/player_leaderboard_view.dart';
 import 'package:inline_hockey_coach/features/dashboards/presentation/widgets/team_metrics_view.dart';
+import 'package:inline_hockey_coach/core/providers/auth_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
