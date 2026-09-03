@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     @field_validator("database_url", mode="before")
     def fix_database_url(cls, v: Any) -> Any:
         if isinstance(v, str):
+            # Strip query params like ?pgbouncer=true which asyncpg rejects
+            if "?" in v:
+                v = v.split("?")[0]
+                
             if v.startswith("postgres://"):
                 v = v.replace("postgres://", "postgresql+asyncpg://", 1)
             elif v.startswith("postgresql://"):
