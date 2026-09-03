@@ -9,4 +9,7 @@ echo "Verificando instalación..."
 flutter --version
 
 echo "Compilando aplicación web..."
-flutter build web --dart-define=API_BASE_URL=https://api-acme-b932.vercel.app
+flutter build web \
+  --dart-define=API_BASE_URL=https://api-acme-b932.vercel.app \
+  --dart-define=SUPABASE_URL=$SUPABASE_URL \
+  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
