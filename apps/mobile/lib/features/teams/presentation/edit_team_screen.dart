@@ -106,9 +106,10 @@ class _EditTeamScreenState extends ConsumerState<EditTeamScreen> {
                       value: role,
                       decoration: const InputDecoration(labelText: 'Rol'),
                       items: PlayerRole.values.map((r) {
+                        final label = r == PlayerRole.skater ? 'JUGADOR' : 'ARQUERO';
                         return DropdownMenuItem(
                           value: r,
-                          child: Text(r.name.toUpperCase()),
+                          child: Text(label),
                         );
                       }).toList(),
                       onChanged: (val) {
@@ -244,7 +245,7 @@ class _EditTeamScreenState extends ConsumerState<EditTeamScreen> {
                       return ListTile(
                         leading: CircleAvatar(child: Text('${p.jerseyNumber}')),
                         title: Text(p.displayName),
-                        subtitle: Text(p.defaultRole),
+                        subtitle: Text(p.defaultRole == PlayerRole.skater.storageValue ? 'Jugador' : 'Arquero'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
