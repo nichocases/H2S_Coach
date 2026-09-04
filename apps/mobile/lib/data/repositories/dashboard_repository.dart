@@ -55,7 +55,7 @@ class DashboardRepository {
       SELECT COUNT(DISTINCT s.id) AS c
       FROM tournament_sessions s
       JOIN teams t ON t.id = s.team_id
-      WHERE s.status IN ('FINISHED', 'IN_PROGRESS') 
+      WHERE s.status IN ('FINISHED', 'IN_PROGRESS', 'PAUSED') 
         $categoryFilter $teamFilter $tournamentFilter $dateFilter
       ''',
       variables: vars,

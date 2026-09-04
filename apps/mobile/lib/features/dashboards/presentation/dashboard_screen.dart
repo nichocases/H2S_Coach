@@ -37,9 +37,9 @@ class DashboardScreen extends ConsumerWidget {
           ],
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'General'),
               Tab(text: 'Jugadores'),
               Tab(text: 'Arqueros'),
+              Tab(text: 'Equipo'),
             ],
           ),
         ),
@@ -176,9 +176,9 @@ class DashboardScreen extends ConsumerWidget {
             const Expanded(
               child: TabBarView(
                 children: [
-                  TeamMetricsView(),
                   PlayerLeaderboardView(),
                   GoalkeeperMetricsView(),
+                  TeamMetricsView(),
                 ],
               ),
             ),
