@@ -80,6 +80,24 @@ class _LiveMatchScreenState extends ConsumerState<LiveMatchScreen> {
     await _persistClock(SessionStatus.paused, elapsedMs);
   }
 
+  Future<void> _finish() async {
+    final chronometer = _chronometer;
+    final elapsedMs = chronometer?.elapsedMs ?? _elapsedMs;
+    
+    if (chronometer != null && chronometer.isRunning) {
+      chronometer.pause();
+      _ticker?.cancel();
+    }
+
+    setState(() {
+      _status = SessionStatus.finished;
+      _elapsedMs = elapsedMs;
+      _savingClock = true;
+    });
+
+    await _persistClock(SessionStatus.finished, elapsedMs);
+  }
+
   Future<void> _persistClock(SessionStatus status, int elapsedMs) async {
     try {
       await ref
@@ -129,6 +147,7 @@ class _LiveMatchScreenState extends ConsumerState<LiveMatchScreen> {
                   elapsedMs: _elapsedMs,
                   onPause: _pause,
                   onStartOrResume: _startOrResume,
+                  onFinish: _finish,
                   savingClock: _savingClock,
                   session: row,
                   status: _status,
@@ -368,6 +387,7 @@ class _LiveMatchHeader extends StatelessWidget {
     required this.elapsedMs,
     required this.onPause,
     required this.onStartOrResume,
+    required this.onFinish,
     required this.savingClock,
     required this.session,
     required this.status,
@@ -376,6 +396,7 @@ class _LiveMatchHeader extends StatelessWidget {
   final int elapsedMs;
   final Future<void> Function() onPause;
   final Future<void> Function() onStartOrResume;
+  final Future<void> Function() onFinish;
   final bool savingClock;
   final TournamentSession session;
   final SessionStatus status;
@@ -413,33 +434,53 @@ class _LiveMatchHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: FilledButton.icon(
-                  onPressed: savingClock || isRunning ? null : onStartOrResume,
-                  icon: const Icon(Icons.play_arrow),
-                  label: Text(
-                    status == SessionStatus.paused ? 'Reanudar' : 'Iniciar',
+        if (status != SessionStatus.finished)
+          Row(
+            children: [
+              if (!isRunning) ...[
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed: savingClock ? null : onStartOrResume,
+                      icon: const Icon(Icons.play_arrow),
+                      label: Text(
+                        status == SessionStatus.paused ? 'Reanudar' : 'Iniciar',
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: savingClock || !isRunning ? null : onPause,
-                  icon: const Icon(Icons.pause),
-                  label: const Text('Pausar'),
+                if (status == SessionStatus.paused) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                        ),
+                        onPressed: savingClock ? null : onFinish,
+                        icon: const Icon(Icons.stop),
+                        label: const Text('Finalizar'),
+                      ),
+                    ),
+                  ),
+                ]
+              ] else ...[
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: savingClock ? null : onPause,
+                      icon: const Icon(Icons.pause),
+                      label: const Text('Pausar'),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ),
+              ],
+            ],
+          ),
         const SizedBox(height: 12),
         Text(
           savingClock ? 'Guardando reloj localmente' : 'Reloj local listo',
