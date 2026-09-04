@@ -69,6 +69,15 @@ class DashboardRepository {
     );
   }
 
+  int _readInt(QueryRow row, String column) {
+    final val = row.read<dynamic>(column);
+    if (val == null) return 0;
+    if (val is int) return val;
+    if (val is num) return val.toInt();
+    if (val is String) return int.tryParse(val) ?? 0;
+    return 0;
+  }
+
   Future<List<PlayerLeaderboardRow>> getPlayerLeaderboard({
     String? categoryId,
     String? teamId,
@@ -114,9 +123,9 @@ class DashboardRepository {
         playerId: row.read<String>('player_id'),
         playerName: row.read<String>('player_name'),
         jerseyNumber: row.read<int>('jersey'),
-        goals: row.read<int?>('goals') ?? 0,
-        assists: row.read<int?>('assists') ?? 0,
-        shots: row.read<int?>('shots') ?? 0,
+        goals: _readInt(row, 'goals'),
+        assists: _readInt(row, 'assists'),
+        shots: _readInt(row, 'shots'),
       );
     }).toList();
   }
@@ -165,8 +174,8 @@ class DashboardRepository {
         playerId: row.read<String>('player_id'),
         playerName: row.read<String>('player_name'),
         jerseyNumber: row.read<int>('jersey'),
-        goalsAllowed: row.read<int?>('goals_allowed') ?? 0,
-        shotsFaced: row.read<int?>('shots_faced') ?? 0,
+        goalsAllowed: _readInt(row, 'goals_allowed'),
+        shotsFaced: _readInt(row, 'shots_faced'),
       );
     }).toList();
   }
