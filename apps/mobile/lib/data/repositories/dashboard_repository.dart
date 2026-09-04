@@ -114,9 +114,9 @@ class DashboardRepository {
         playerId: row.read<String>('player_id'),
         playerName: row.read<String>('player_name'),
         jerseyNumber: row.read<int>('jersey'),
-        goals: row.read<int>('goals') ?? 0,
-        assists: row.read<int>('assists') ?? 0,
-        shots: row.read<int>('shots') ?? 0,
+        goals: row.read<int?>('goals') ?? 0,
+        assists: row.read<int?>('assists') ?? 0,
+        shots: row.read<int?>('shots') ?? 0,
       );
     }).toList();
   }
@@ -165,8 +165,8 @@ class DashboardRepository {
         playerId: row.read<String>('player_id'),
         playerName: row.read<String>('player_name'),
         jerseyNumber: row.read<int>('jersey'),
-        goalsAllowed: row.read<int>('goals_allowed') ?? 0,
-        shotsFaced: row.read<int>('shots_faced'),
+        goalsAllowed: row.read<int?>('goals_allowed') ?? 0,
+        shotsFaced: row.read<int?>('shots_faced') ?? 0,
       );
     }).toList();
   }
