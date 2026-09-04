@@ -69,15 +69,6 @@ class DashboardRepository {
     );
   }
 
-  int _readInt(QueryRow row, String column) {
-    final val = row.read<dynamic>(column);
-    if (val == null) return 0;
-    if (val is int) return val;
-    if (val is num) return val.toInt();
-    if (val is String) return int.tryParse(val) ?? 0;
-    return 0;
-  }
-
   Future<List<PlayerLeaderboardRow>> getPlayerLeaderboard({
     String? categoryId,
     String? teamId,
@@ -101,9 +92,9 @@ class DashboardRepository {
         p.id AS player_id,
         p.display_name AS player_name,
         p.jersey_number AS jersey,
-        SUM(CASE WHEN m.action_type = 'SHOOT' AND m.outcome = 'GOAL' THEN 1 ELSE 0 END) AS goals,
-        SUM(CASE WHEN m.action_type = 'ASSIST' THEN 1 ELSE 0 END) AS assists,
-        SUM(CASE WHEN m.action_type = 'SHOOT' THEN 1 ELSE 0 END) AS shots
+        CAST(SUM(CASE WHEN m.action_type = 'SHOOT' AND m.outcome = 'GOAL' THEN 1 ELSE 0 END) AS INTEGER) AS goals,
+        CAST(SUM(CASE WHEN m.action_type = 'ASSIST' THEN 1 ELSE 0 END) AS INTEGER) AS assists,
+        CAST(SUM(CASE WHEN m.action_type = 'SHOOT' THEN 1 ELSE 0 END) AS INTEGER) AS shots
       FROM players p
       LEFT JOIN (
         SELECT ma.* FROM match_actions ma 
@@ -123,9 +114,9 @@ class DashboardRepository {
         playerId: row.read<String>('player_id'),
         playerName: row.read<String>('player_name'),
         jerseyNumber: row.read<int>('jersey'),
-        goals: _readInt(row, 'goals'),
-        assists: _readInt(row, 'assists'),
-        shots: _readInt(row, 'shots'),
+        goals: row.read<int?>('goals') ?? 0,
+        assists: row.read<int?>('assists') ?? 0,
+        shots: row.read<int?>('shots') ?? 0,
       );
     }).toList();
   }
@@ -153,8 +144,8 @@ class DashboardRepository {
         p.id AS player_id,
         p.display_name AS player_name,
         p.jersey_number AS jersey,
-        SUM(CASE WHEN g.action_type = 'GOAL_ALLOWED' THEN 1 ELSE 0 END) AS goals_allowed,
-        COUNT(g.id) AS shots_faced
+        CAST(SUM(CASE WHEN g.action_type = 'GOAL_ALLOWED' THEN 1 ELSE 0 END) AS INTEGER) AS goals_allowed,
+        CAST(COUNT(g.id) AS INTEGER) AS shots_faced
       FROM players p
       LEFT JOIN (
         SELECT ga.* FROM goalkeeper_actions ga 
@@ -174,8 +165,8 @@ class DashboardRepository {
         playerId: row.read<String>('player_id'),
         playerName: row.read<String>('player_name'),
         jerseyNumber: row.read<int>('jersey'),
-        goalsAllowed: _readInt(row, 'goals_allowed'),
-        shotsFaced: _readInt(row, 'shots_faced'),
+        goalsAllowed: row.read<int?>('goals_allowed') ?? 0,
+        shotsFaced: row.read<int?>('shots_faced') ?? 0,
       );
     }).toList();
   }
