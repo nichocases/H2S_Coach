@@ -28,7 +28,7 @@ Puede contemplarse posteriormente con edición concurrente y control de permisos
 
 - Gestión local de equipos, jugadores y entrenadores.
 - Configuración de torneo/partido.
-- Selección de jugadores activos y un arquero.
+- Selección de jugadores activos y múltiples arqueros (con sustitución en partido).
 - Cronómetro ascendente con pausa y reanudación.
 - Registro de pase correcto, pase fallido, asistencia y tiro.
 - Detalle de resultado y zona objetivo para tiros.
@@ -57,7 +57,7 @@ Como entrenador quiero indicar torneo, fecha, hora, equipo, entrenador y plantil
 **Aceptación**
 
 - Torneo, fecha, equipo y entrenador son obligatorios.
-- Debe seleccionarse al menos un jugador y exactamente un arquero.
+- Debe seleccionarse al menos un jugador y al menos un arquero.
 - La sesión recibe UUID local y estado `DRAFT`.
 - Puede crearse sin internet.
 
@@ -182,7 +182,6 @@ stateDiagram-v2
 ## 8. Decisiones pendientes para una versión posterior
 
 - Duración reglamentaria configurable y períodos.
-- Múltiples arqueros por partido y sustituciones.
 - Registro de acciones del rival.
 - Reglas específicas por liga o categoría.
 

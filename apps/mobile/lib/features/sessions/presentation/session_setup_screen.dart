@@ -275,10 +275,10 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
                       },
               ),
           const SizedBox(height: 16),
-          Text('Arquero', style: Theme.of(context).textTheme.titleMedium),
+          Text('Arquero Titular', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           if (goalkeepers.isEmpty)
-            const Text('Agrega exactamente un arquero.')
+            const Text('Agrega al menos un arquero al equipo.')
           else
             for (final goalkeeper in goalkeepers)
               _GoalkeeperOption(

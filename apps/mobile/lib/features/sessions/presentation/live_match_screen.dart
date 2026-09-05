@@ -301,6 +301,36 @@ class _LiveMatchScreenState extends ConsumerState<LiveMatchScreen> {
     }
   }
 
+  Future<void> _openGoalkeeperSwapSheet(TournamentSession session, Player activeGoalkeeper) async {
+    final newGoalkeeperId = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) {
+        return _GoalkeeperSwapSheet(
+          teamId: session.teamId,
+          activeGoalkeeperId: activeGoalkeeper.id,
+        );
+      },
+    );
+    if (newGoalkeeperId == null) {
+      return;
+    }
+    
+    try {
+      await ref.read(sessionRepositoryProvider).swapGoalkeeper(
+        sessionId: session.id,
+        newGoalkeeperId: newGoalkeeperId,
+      );
+      ref.invalidate(sessionRosterProvider(widget.sessionId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Arquero sustituido exitosamente.')),
+        );
+      }
+    } on Object catch(error) {
+      _showCaptureError(error);
+    }
+  }
+
   Future<void> _voidLatestEvent() async {
     try {
       final event = await ref
@@ -580,11 +610,13 @@ class _MetricPill extends StatelessWidget {
 class _CaptureRoster extends StatelessWidget {
   const _CaptureRoster({
     required this.onGoalkeeperTap,
+    required this.onGoalkeeperSwapTap,
     required this.onPlayerTap,
     required this.roster,
   });
 
   final void Function(Player goalkeeper) onGoalkeeperTap;
+  final void Function(Player goalkeeper)? onGoalkeeperSwapTap;
   final void Function(Player player) onPlayerTap;
   final AsyncValue<SessionRoster?> roster;
 
@@ -592,9 +624,10 @@ class _CaptureRoster extends StatelessWidget {
   Widget build(BuildContext context) {
     return roster.when(
       data: (value) {
-        if (value == null || value.isEmpty) {
-          return const Text('No hay jugadores seleccionados.');
+        if (value == null) {
+          return const Text('Sesión no encontrada.');
         }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -604,17 +637,20 @@ class _CaptureRoster extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final player in value.skaters)
-                  SizedBox(
-                    height: 48,
-                    child: OutlinedButton(
-                      onPressed: () => onPlayerTap(player),
-                      child: Text(
-                        player.rosterLabel,
-                        overflow: TextOverflow.ellipsis,
+                if (value.skaters.isEmpty)
+                  const Text('No hay jugadores activos.')
+                else
+                  for (final skater in value.skaters)
+                    SizedBox(
+                      height: 48,
+                      child: FilledButton.tonal(
+                        onPressed: () => onPlayerTap(skater),
+                        child: Text(
+                          skater.rosterLabel,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
-                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -623,16 +659,30 @@ class _CaptureRoster extends StatelessWidget {
             if (value.goalkeeper == null)
               const Text('No hay arquero activo.')
             else
-              SizedBox(
-                height: 48,
-                child: FilledButton.icon(
-                  onPressed: () => onGoalkeeperTap(value.goalkeeper!),
-                  icon: const Icon(Icons.sports_hockey),
-                  label: Text(
-                    value.goalkeeper!.rosterLabel,
-                    overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: FilledButton.icon(
+                        onPressed: () => onGoalkeeperTap(value.goalkeeper!),
+                        icon: const Icon(Icons.sports_hockey),
+                        label: Text(
+                          value.goalkeeper!.rosterLabel,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  if (onGoalkeeperSwapTap != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton.filledTonal(
+                      onPressed: () => onGoalkeeperSwapTap!(value.goalkeeper!),
+                      icon: const Icon(Icons.swap_horiz),
+                      tooltip: 'Sustituir arquero',
+                    ),
+                  ],
+                ],
               ),
           ],
         );
@@ -1049,5 +1099,85 @@ extension _ShotOriginZoneLabel on ShotOriginZone {
       ShotOriginZone.zone3 => 'Z3',
       ShotOriginZone.zone4 => 'Z4',
     };
+  }
+}
+
+class _GoalkeeperSwapSheet extends ConsumerStatefulWidget {
+  const _GoalkeeperSwapSheet({
+    required this.teamId,
+    required this.activeGoalkeeperId,
+  });
+
+  final String teamId;
+  final String activeGoalkeeperId;
+
+  @override
+  ConsumerState<_GoalkeeperSwapSheet> createState() => _GoalkeeperSwapSheetState();
+}
+
+class _GoalkeeperSwapSheetState extends ConsumerState<_GoalkeeperSwapSheet> {
+  List<Player>? _goalkeepers;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final allPlayers = await ref.read(playerRepositoryProvider).listForTeam(widget.teamId);
+      final gks = allPlayers.where((p) => p.defaultRole == PlayerRole.goalkeeper.storageValue && p.active && p.id != widget.activeGoalkeeperId).toList();
+      if (mounted) {
+        setState(() => _goalkeepers = gks);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = e.toString());
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Sustituir Arquero',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text('Error: $_error', style: const TextStyle(color: Colors.red)),
+              )
+            else if (_goalkeepers == null)
+              const Center(child: CircularProgressIndicator())
+            else if (_goalkeepers!.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text('No hay otros arqueros en el equipo.'),
+              )
+            else
+              for (final gk in _goalkeepers!)
+                ListTile(
+                  leading: const Icon(Icons.sports_hockey),
+                  title: Text(gk.rosterLabel),
+                  onTap: () => Navigator.pop(context, gk.id),
+                ),
+          ],
+        ),
+      ),
+    );
   }
 }

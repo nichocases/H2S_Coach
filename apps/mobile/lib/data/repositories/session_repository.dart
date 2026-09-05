@@ -134,6 +134,64 @@ class TournamentSessionRepository {
     });
   }
 
+  Future<TournamentSession> swapGoalkeeper({
+    required String sessionId,
+    required String newGoalkeeperId,
+  }) {
+    return _syncQueue.runAtomically(() async {
+      final current = await find(sessionId);
+      if (current == null) {
+        throw StateError('Session not found: $sessionId');
+      }
+
+      if (current.activeGoalkeeperId == newGoalkeeperId) {
+        return current; // No change needed
+      }
+
+      final now = DateTime.now().toUtc();
+      
+      // Ensure the new goalkeeper is in the session_players table
+      final existingPlayers = await playersForSession(sessionId);
+      final hasPlayer = existingPlayers.any((p) => p.playerId == newGoalkeeperId);
+      
+      if (!hasPlayer) {
+        await _db.into(_db.sessionPlayers).insert(
+              SessionPlayersCompanion.insert(
+                sessionId: sessionId,
+                playerId: newGoalkeeperId,
+                role: PlayerRole.goalkeeper.storageValue,
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+      }
+
+      final updated = current.copyWith(
+        activeGoalkeeperId: newGoalkeeperId,
+        updatedAt: now,
+        version: current.version + 1,
+      );
+      await _db.update(_db.tournamentSessions).replace(updated);
+
+      final selectedPlayers = await playersForSession(sessionId);
+      await _syncQueue.enqueueUpsert(
+        entityType: SyncEntityType.tournamentSession,
+        entityId: updated.id,
+        payload: _sessionPayload(
+          updated,
+          [
+            for (final player in selectedPlayers)
+              SessionPlayerDraft(
+                playerId: player.playerId,
+                role: PlayerRole.fromStorage(player.role),
+              ),
+          ],
+        ),
+      );
+      return updated;
+    });
+  }
+
   Future<TournamentSession> finishSession(String sessionId) {
     return _syncQueue.runAtomically(() async {
       final current = await find(sessionId);
@@ -185,14 +243,16 @@ class TournamentSessionRepository {
     final goalkeeperSelections = draft.players
         .where((player) => player.role == PlayerRole.goalkeeper)
         .toList(growable: false);
-    if (goalkeeperSelections.length != 1) {
+    if (goalkeeperSelections.isEmpty) {
       throw const SessionValidationException(
-        'Exactly one active goalkeeper is required.',
+        'At least one active goalkeeper is required.',
       );
     }
-    if (goalkeeperSelections.single.playerId != draft.activeGoalkeeperId) {
+    final hasActiveGoalkeeper = goalkeeperSelections
+        .any((selection) => selection.playerId == draft.activeGoalkeeperId);
+    if (!hasActiveGoalkeeper) {
       throw const SessionValidationException(
-        'Active goalkeeper must match the goalkeeper selection.',
+        'Active goalkeeper must be among the goalkeeper selections.',
       );
     }
 
